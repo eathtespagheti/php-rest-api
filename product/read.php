@@ -1,7 +1,11 @@
 <?php
 // required headers
 header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json; charset=UTF-8");
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+  header("Content-Type: application/json; charset=UTF-8");
+} elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
+  header("Content-Type: text/html; charset=UTF-8");
+}
 
 // include database and object files
 include_once '../config/database.php';
@@ -28,30 +32,43 @@ if($num>0){
   // retrieve our table contents
   // fetch() is faster than fetchAll()
   // http://stackoverflow.com/questions/2770630/pdofetchall-vs-pdofetch-in-a-loop
-  while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-    // extract row
-    // this will make $row['name'] to
-    // just $name only
-    extract($row);
+  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+      // extract row
+      // this will make $row['name'] to
+      // just $name only
+      extract($row);
 
-    $product_item=array(
-      "id" => $id,
-      "name" => $name,
-      "description" => html_entity_decode($description),
-      "price" => $price,
-      "category_id" => $category_id,
-      "category_name" => $category_name
-    );
-
-    array_push($products_arr["records"], $product_item);
+      $product_item=array(
+        "id" => $id,
+        "name" => $name,
+        "description" => html_entity_decode($description),
+        "price" => $price,
+        "category_id" => $category_id,
+        "category_name" => $category_name
+      );
+      array_push($products_arr["records"], $product_item);
+    }
+    echo json_encode($products_arr);
   }
-
-  echo json_encode($products_arr);
-}
-
-else{
-  echo json_encode(
-    array("message" => "No products found.")
-  );
+  elseif ($_SERVER['REQUEST_METHOD'] == 'GET') {
+    echo "<html><body>";
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)){
+      extract($row);
+      echo "$id<br>";
+      echo "$name<br>";
+      echo "$description<br>";
+      echo "$price<br>";
+      echo "$category_id<br>";
+      echo "$category_name<br>";
+      echo "<br>";
+    }
+    echo "</body></html>";
+  }
+  else{
+    echo json_encode(
+      array("message" => "No products found.")
+    );
+  }
 }
 ?>
